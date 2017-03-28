@@ -8,4 +8,4 @@ To use it, the server.go shall be launched as it is the server and the different
  package needed(or update the one you have with these package). Look at the server.go file to include the dependencies
 
 TODO : avoid server crashing when JS refreshing!!!
-FINISH SERVER SIDE§ (AS SOON AS POSSIBLE)
+FINISH SERVER SIDE (AS SOON AS POSSIBLE)

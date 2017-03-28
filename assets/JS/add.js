@@ -1,6 +1,7 @@
-function linkSocketListener(socket, initDataSent){
+function linkSocketListener(socket){
     socket.onopen = function() {
-        socket.send(initDataSent);
+        console.log("Socket opened");
+        socket.send(JSON.stringify({Code : 0, Input : 'initial connection'}));
     };
     socket.onmessage = function (e) {
         console.log(e);
@@ -11,6 +12,9 @@ function linkSocketListener(socket, initDataSent){
 }
 
 window.onload = function(){
+    var websocket = new WebSocket('ws://localhost:8081/');
+
+    linkSocketListener(websocket);
     document.getElementById('myForm').onsubmit = function(){
         var objectData = {
             'Name' : this['name'].value,
@@ -18,11 +22,8 @@ window.onload = function(){
             'Y'    : parseInt(this['yPosition'].value)
         };
 
-        console.log(JSON.stringify(objectData));
-
-        var websocket = new WebSocket('ws://localhost:8081/');
-
-        linkSocketListener(websocket, JSON.stringify(objectData));
+        console.log(JSON.stringify({Code : 1, Data : objectData}));
+        websocket.send(JSON.stringify({Code : 1, Data : objectData}));
 
         return false;
     }
