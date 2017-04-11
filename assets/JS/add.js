@@ -1,4 +1,19 @@
-function linkSocketListener(socket){
+function linkJoinEvent(){
+    for (var i in document.querySelectorAll("#join>button")) {
+        document.querySelectorAll("#join>button")[i].onclick = function () {
+            console.log(this.name);
+            websocket.send(JSON.stringify({Code : 1, Data : this.name}));
+            pageIndex = this.name;
+        }
+    }
+}
+
+
+
+
+
+
+/*function linkSocketListener(socket){
     socket.onopen = function() {
         console.log("Socket opened");
         socket.send(JSON.stringify({Code : 0, Input : 'initial connection'}));
@@ -27,4 +42,4 @@ window.onload = function(){
 
         return false;
     }
-}
+}*/

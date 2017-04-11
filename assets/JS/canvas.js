@@ -41,7 +41,7 @@ function Coordinate(x, y){
     this.Y = y;
 }
 
-function Snake(FirstName, Coordinates, Color){
+function Snake(FirstName, Coordinates, Color, isYours){
     this.FirstName = FirstName;
     this.Coordinates = Coordinates;
     this.Color = Color;
@@ -102,8 +102,9 @@ function Snake(FirstName, Coordinates, Color){
         }
         canvas.drawAnew();*/
     };
-
-    window.addEventListener('keypress', this.move);
+    if (isYours){
+        window.addEventListener('keypress', this.move);
+    }
 }
 
 function Canvas(htmlElement, cellWidth, color){
@@ -143,7 +144,13 @@ function Canvas(htmlElement, cellWidth, color){
                 myObject.canvas.fillStyle = save;
             }
         }
-        snake1.drawSnake(myObject);
+
+        for (i in arraySnake){
+            if (arraySnake.hasOwnProperty(i)){
+                console.log(arraySnake);
+                arraySnake[i].drawSnake(myObject);
+            }
+        }
     };
 
     this.fillCell = function(coordinate, color){
@@ -168,37 +175,38 @@ function toggleFillStyle(canvasObject){
 function linkSocketListener(socket){
     socket.onopen = function() {
         console.log("Socket opened");
-        socket.send(JSON.stringify({Code : 1, Data : 'initial connection'}));
+        socket.send(JSON.stringify({Code : 2, Data : 'initial connection'}));
     };
     socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
         if (message.Code === 400){
-            console.log(snake1);
+            console.log(message.ArraySnake);
+            /*console.log(snake1);
             snake1.changeValue(message.ArraySnake[0].Name, message.ArraySnake[0].Position, message.ArraySnake[0].Color);
             console.log(snake1);
-            //snake1 = message.ArraySnake[0];
+            //snake1 = message.ArraySnake[0];*/
+            for (var i in message.ArraySnake){
+                if (message.ArraySnake.hasOwnProperty(i)){
+                    if (i in arraySnake){
+                        arraySnake[i].changeValue(message.ArraySnake[i].Name, message.ArraySnake[i].Position, message.ArraySnake[i].Color);
+                    }else{
+                        var isYours = false;
+                        if (i === pageIndex){
+                            isYours = true;
+                        }
+
+                        arraySnake.push(new Snake(message.ArraySnake[i].Name, message.ArraySnake[i].Position, message.ArraySnake[i].Color, isYours));
+                    }
+                }
+            }
+            //arraySnake = message.ArraySnake;
             canvas.appleList = message.ArrayApple;
             canvas.drawAnew();
+        }else{
+            alert(message.Error);
         }
     };
     socket.onclose = function () {
         console.log("Socket closed");
     }
 }
-
-var canvas;
-var websocket;
-var snake1 = new Snake();
-
-window.onload = function () {
-    var htmlElementCanvas = document.getElementsByTagName('canvas')[0];
-    if (htmlElementCanvas.getContext) {
-        websocket = new WebSocket('ws://localhost:8081/single');
-        linkSocketListener(websocket);
-
-        canvas = new Canvas(htmlElementCanvas, 50, ['#ff0000', '#0000ff']);
-        snake1.drawSnake(canvas);
-
-        canvas.drawAnew();
-    }
-};
