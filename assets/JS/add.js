@@ -1,10 +1,13 @@
 function linkJoinEvent(){
     for (var i in document.querySelectorAll("#join>button")) {
         document.querySelectorAll("#join>button")[i].onclick = function () {
-            console.log(this.name);
-            websocket.send(JSON.stringify({Code : 1, Data : this.name}));
+            websocket.send(JSON.stringify({kind : 'connect', slot : this.name, name: 'change', color: 'black'}));
             pageIndex = this.name;
         }
+    }
+
+    document.getElementById('start').onclick = function () {
+        websocket.send(JSON.stringify({kind : 'start'}));
     }
 }
 

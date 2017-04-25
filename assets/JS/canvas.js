@@ -37,52 +37,55 @@ Array.prototype.equals = function (array) {
 //Object.defineProperty(Array.prototype, "equals", {enumerable: false});
 
 function Coordinate(x, y){
-    this.X = x;
-    this.Y = y;
+    this.x = x;
+    this.y = y;
 }
 
 function Snake(FirstName, Coordinates, Color, isYours){
-    this.FirstName = FirstName;
-    this.Coordinates = Coordinates;
-    this.Color = Color;
+    this.firstName = FirstName;
+    this.coordinates = Coordinates;
+    this.color = Color;
     var myObject = this;
 
     this.changeValue = function (FirstName, Coordinates, Color) {
-        myObject.FirstName = FirstName;
-        myObject.Coordinates = Coordinates;
-        myObject.Color = Color;
+        myObject.firstName = FirstName;
+        myObject.coordinates = Coordinates;
+        myObject.color = Color;
     };
 
     this.drawSnake = function(canvas){
-        if (canvas.color.indexOf(this.Color) !== -1){
+        console.log('hello. Snake drawing!');
+        if (canvas.color.indexOf(this.color) !== -1){
+            console.log('drawing impossible! Please choose another color');
             return 'drawing impossible! Please choose another color';
         }
 
-        Coordinates = myObject.Coordinates;
+        Coordinates = myObject.coordinates;
         for (var i in Coordinates){
-            canvas.fillCell(Coordinates[i], this.Color);
+            canvas.fillCell(Coordinates[i], this.color);
         }
     };
 
     this.move = function(direction){
         console.log(direction.key, "new movement");
+        console.log(JSON.stringify({Code : 0, Data : 'z'}));
         //var newCoordinates;
         switch (direction.key){
             case 'z' :
                 //console.log(myObject.Coordinates, myObject);
-                websocket.send(JSON.stringify({Code : 0, Data : 'z'}));
+                websocket.send(JSON.stringify({kind : 'move', key : 'up'}));
                 //newCoordinates = new Coordinate(myObject.Coordinates[0][0], myObject.Coordinates[0][1]-1);//todo comment
                 break;
             case 'q':
-                websocket.send(JSON.stringify({Code : 0, Data : 'q'}));
+                websocket.send(JSON.stringify({kind : 'move', key : 'left'}));
                 //newCoordinates = new Coordinate(myObject.Coordinates[0][0]-1, myObject.Coordinates[0][1]);//todo comment
                 break;
             case 's':
-                websocket.send(JSON.stringify({Code : 0, Data : 's'}));
+                websocket.send(JSON.stringify({kind : 'move', key : 'down'}));
                 //newCoordinates = new Coordinate(myObject.Coordinates[0][0], myObject.Coordinates[0][1]+1);//todo comment
                 break;
             case 'd':
-                websocket.send(JSON.stringify({Code : 0, Data : 'd'}));
+                websocket.send(JSON.stringify({kind : 'move', key : 'right'}));
                 //newCoordinates = new Coordinate(myObject.Coordinates[0][0]+1, myObject.Coordinates[0][1]);//todo comment
                 break;
             default:
@@ -103,6 +106,7 @@ function Snake(FirstName, Coordinates, Color, isYours){
         canvas.drawAnew();*/
     };
     if (isYours){
+        console.log('listener added!!!');
         window.addEventListener('keypress', this.move);
     }
 }
@@ -134,7 +138,7 @@ function Canvas(htmlElement, cellWidth, color){
                 var save = myObject.canvas.fillStyle;
 
                 for (var iterator in myObject.appleList){
-                    if (myObject.appleList[iterator].X === i && myObject.appleList[iterator].Y === j){
+                    if (myObject.appleList[iterator].x === i && myObject.appleList[iterator].y === j){
                         myObject.canvas.fillStyle = 'green';
                         break;
                     }
@@ -147,7 +151,7 @@ function Canvas(htmlElement, cellWidth, color){
 
         for (i in arraySnake){
             if (arraySnake.hasOwnProperty(i)){
-                console.log(arraySnake);
+                console.log(arraySnake, i, myObject);
                 arraySnake[i].drawSnake(myObject);
             }
         }
@@ -155,15 +159,15 @@ function Canvas(htmlElement, cellWidth, color){
 
     this.fillCell = function(coordinate, color){
         myObject.canvas.fillStyle = color;
-        myObject.canvas.fillRect(coordinate.X*this.cellWidth,coordinate.Y*this.cellWidth,this.cellWidth,this.cellWidth);
+        myObject.canvas.fillRect(coordinate.x*this.cellWidth,coordinate.y*this.cellWidth,this.cellWidth,this.cellWidth);
     };
 
-    this.getRandomCoordInCanvas = function(){
+    /*this.getRandomCoordInCanvas = function(){
         var x = Math.floor(Math.random() * myObject.width);
         var y = Math.floor(Math.random() * myObject.height);
 
         return new Coordinate(x, y);
-    };
+    };*/
 
     this.drawAnew();
 }
@@ -172,19 +176,53 @@ function toggleFillStyle(canvasObject){
     canvasObject.canvas.fillStyle = canvasObject.canvas.fillStyle === canvasObject.color[0] ? canvasObject.color[1] : canvasObject.color[0];
 }
 
+function makeUpdate(messageSnakeArray, AppleArray){
+    for (var i in messageSnakeArray) {
+        if (messageSnakeArray.hasOwnProperty(i)) {
+            if (i in arraySnake) {
+                arraySnake[i].changeValue(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color);
+            } else {
+                var isYours = false;
+                if (i === pageIndex) {
+                    isYours = true;
+                }
+
+                arraySnake.push(new Snake(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color, isYours));
+            }
+        }
+    }
+    canvas.appleList = AppleArray;
+    canvas.drawAnew();
+}
+
 function linkSocketListener(socket){
-    socket.onopen = function() {
+    /*socket.onopen = function() {
         console.log("Socket opened");
-        socket.send(JSON.stringify({Code : 2, Data : 'initial connection'}));
-    };
+        console.log(JSON.stringify({Code : 2, Data : 'initial connection'}));
+        //socket.send(JSON.stringify({Code : 2, Data : 'initial connection'}));
+    };*/
     socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
-        if (message.Code === 400){
+        console.log(message);
+        switch (message.kind){
+            case 'init':
+                //init func
+                break;
+            case 'update':
+                makeUpdate(message.snakes, message.apples);
+                break;
+            case 'won':
+                //win function
+                break;
+            default :
+                alert('invalid kind!');
+        }
+        /*if (message.Code === 400){
             console.log(message.ArraySnake);
             /*console.log(snake1);
             snake1.changeValue(message.ArraySnake[0].Name, message.ArraySnake[0].Position, message.ArraySnake[0].Color);
             console.log(snake1);
-            //snake1 = message.ArraySnake[0];*/
+            //snake1 = message.ArraySnake[0];
             for (var i in message.ArraySnake){
                 if (message.ArraySnake.hasOwnProperty(i)){
                     if (i in arraySnake){
@@ -204,7 +242,7 @@ function linkSocketListener(socket){
             canvas.drawAnew();
         }else{
             alert(message.Error);
-        }
+        }*/
     };
     socket.onclose = function () {
         console.log("Socket closed");
