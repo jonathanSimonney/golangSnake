@@ -206,7 +206,7 @@ function linkSocketListener(socket){
         console.log(message);
         switch (message.kind){
             case 'init':
-                //init func
+                alert('init sent!');
                 break;
             case 'update':
                 makeUpdate(message.snakes, message.apples);

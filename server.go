@@ -376,7 +376,7 @@ type Move struct{
 
 type WebsocketSnakeLink struct{
 	Websocket *websocket.Conn
-	index int
+	Index int
 }
 
 /**********************/
@@ -492,6 +492,7 @@ func HandleClient(ws *websocket.Conn) {
 
 	// Dés qu'un client se connecte, on lui envoie l'état de la map
 	ws.Write(getInitMessage())
+	WsSlice = append(WsSlice, WebsocketSnakeLink{ws, -10})
 	//ws.Write(getUpdateMessage())
 
 	for {
@@ -535,7 +536,8 @@ func HandleClient(ws *websocket.Conn) {
 		} else if kind == "connect" {
 			parseConnect(content, ws)
 		} else if kind == "start" {
-			sendAllUpdateMessage()
+			sendAllInitMessage()
+			sendAllConnectedUpdateMessage()
 		}else {
 			fmt.Println("Kind inconnue !")
 		}
@@ -561,16 +563,16 @@ func parseMove(jsonMessage string, websocket *websocket.Conn){
 
 	for _, wsSnakeLink := range WsSlice{
 		if websocket == wsSnakeLink.Websocket{
-			ArraySnake[wsSnakeLink.index].Move(key)
+			ArraySnake[wsSnakeLink.Index].Move(key)
 			break
 		}
 	}
 
-	sendAllUpdateMessage()
+	sendAllConnectedUpdateMessage()
 }
 
 //connectfunc
-func parseConnect(content string, ws *websocket.Conn){
+func parseConnect(content string, currentWebsocket *websocket.Conn){
 	var snake Snake
 
 	err := json.Unmarshal([]byte(content), &snake) // JSON Texte -> Obj
@@ -579,7 +581,7 @@ func parseConnect(content string, ws *websocket.Conn){
 		//todo deconnect client (function disconnectClient(ws))
 		return
 	}
-	snake.WS = ws
+	snake.WS = currentWebsocket
 
 	fmt.Println(snake)
 
@@ -591,7 +593,13 @@ func parseConnect(content string, ws *websocket.Conn){
 		}
 	}
 
-	WsSlice = append(WsSlice, WebsocketSnakeLink{ws, snake.Slot - 1})
+	for index, ws := range WsSlice{
+		if ws.Websocket == currentWebsocket {
+			WsSlice[index].Index = snake.Slot - 1
+		}
+	}
+
+	sendAllInitMessage()
 }
 
 //OTHER FUNCTIONS
@@ -631,9 +639,17 @@ func createApple (forbiddenCoordinate []Pos){//should probably be method of grid
 	}
 };
 
-func sendAllUpdateMessage() {
+func sendAllConnectedUpdateMessage() {
 	for _, ws := range WsSlice{
-		websocket.Message.Send(ws.Websocket, string(getUpdateMessage()))
+		if ws.Index != -10 {
+			websocket.Message.Send(ws.Websocket, string(getUpdateMessage()))
+		}
+	}
+}
+
+func sendAllInitMessage() {
+	for _, ws := range WsSlice{
+		websocket.Message.Send(ws.Websocket, string(getInitMessage()))
 	}
 }
 
