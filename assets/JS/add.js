@@ -1,7 +1,8 @@
 function linkJoinEvent(){
     for (var i in document.querySelectorAll("#join>button")) {
         document.querySelectorAll("#join>button")[i].onclick = function () {
-            websocket.send(JSON.stringify({kind : 'connect', slot : this.name, name: 'change', color: 'black'}));
+            websocket.send(JSON.stringify({kind : 'connect', slot : parseInt(this.name), name: 'change', color: 'black'}));
+            //todo hide buttons.
             pageIndex = this.name;
         }
     }

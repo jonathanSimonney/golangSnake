@@ -313,6 +313,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"math/rand"
 
 	"golang.org/x/net/websocket"
 )
@@ -333,6 +334,7 @@ type Snake struct {
 
 	Name  string `json:"name"`
 	Color string `json:"color"`
+	Slot  int    `json:"slot"`  //Not mandatory!!!
 
 	State string `json:"state"` // "alive" ou "dead"
 
@@ -343,20 +345,18 @@ type Snake struct {
 				    // WebSocket du client qui le controle
 				    // `json:"-"` ça veut dire qu'on l'envoie/reçoit pas par le JSON
 	WS *websocket.Conn `json:"-"`
-
-				    // Pour savoir si le serpent est déjà utilisé
-	Used bool `json:"-"`
 }
 
 type Update struct {
 	Kind string `json:"kind"`
 
 	Snakes []Snake `json:"snakes"`
+	MapSize int `json:"map_size"`
 
 	Apples []Pos `json:"apples"`
 }
 
-// Structure envoyé dés que le front JS se connecte
+// Structure envoyée dés que le front JS se connecte
 type Init struct {
 	Kind        string `json:"kind"`
 	PlayersSlot []int  `json:"players_slot"`
@@ -369,11 +369,66 @@ type KindOnly struct {
 	Kind string `json:"kind"`
 }
 
+type Move struct{
+	Kind string `json:"kind"`
+	Key  string `json:"key"`
+}
+
+type WebsocketSnakeLink struct{
+	Websocket *websocket.Conn
+	index int
+}
+
+/**********************/
+/* Méthodes */
+/**********************/
+
+func (this *Snake) Move(key string){
+	//console.log(direction, myObject);
+	var newCoordinates = Pos{}
+	switch (key){
+	case "up" :
+		//console.log(myObject.Coordinates, myObject);
+		newCoordinates = Pos{this.Body[0].X, this.Body[0].Y - 1}
+		break
+	case "left":
+		newCoordinates = Pos{this.Body[0].X-1, this.Body[0].Y}
+		break
+	case "down":
+		newCoordinates = Pos{this.Body[0].X, this.Body[0].Y+1}
+		break
+	case "right":
+		newCoordinates = Pos{this.Body[0].X+1,this.Body[0].Y}
+		break
+	default:
+		fmt.Println("invalid direction supplied.No move will be made.")
+	}
+
+	this.Body = append([]Pos{newCoordinates}, this.Body...)
+	if (coordInSlice(newCoordinates, ArrayApples)){
+		createApple(this.Body)
+		fmt.Println(ArrayApples)
+
+		for key, coord := range ArrayApples{
+			if (coord == newCoordinates){
+				ArrayApples = append(ArrayApples[:key], ArrayApples[key+1:]...)
+				break
+			}
+		}
+
+	}else{
+		this.Body = this.Body[:len(this.Body)-1]
+	}
+}
+
 /**********************/
 /* Variables globales */
 /**********************/
 
-// Sert à vérouiller les informations globales
+//sert à avoir toutes les ws
+var WsSlice = []WebsocketSnakeLink{}
+
+// Sert à verrouiller les informations globales
 var GeneralMutex sync.Mutex
 
 // Etat du jeu
@@ -381,37 +436,42 @@ var StateGame = Init{
 	Kind:        "init",
 	StateGame:   "waiting",
 	MapSize:     50,
-	PlayersSlot: []int{1, 2},
+	PlayersSlot: []int{1, 2, 3, 4},
 }
 
 //tableau de pommes
-var arrayApples = []Pos{{25, 25}, {35, 40}}
+var ArrayApples = []Pos{{25, 25}, {35, 40}}
 
-// 1er joueur, avec une position prédéfinit, et une couleur/nom par défaut//todo replace with MY arraySnake structured correctly!
-var Player1 = Snake{
-	Kind:  "snake",
-	Name:  "p1",
-	Color: "black",
-	State: "alive",
-	Body: []Pos{
-		Pos{X: 1, Y: 3},
-		Pos{X: 1, Y: 2},
-		Pos{X: 1, Y: 1},
+var ArraySnake = []Snake{
+	{Kind:  "snake",
+		Name:  "p1",
+		Color: "black",
+		State: "alive",
+		Body: []Pos{{X: 1, Y: 3}, {X: 1, Y: 2}, {X: 1, Y: 1}, },
 	},
-}
+	{
+		Kind: "snake",
+		Name:  "p2",
+		Color: "yellow",
+		State: "alive",
+		Body: []Pos{{X: 48, Y: 3}, {X: 48, Y: 2}, {X: 48, Y: 1}, },
+	},
+	{
+		Kind: "snake",
+		Name:  "p3",
+		Color: "purple",
+		State: "alive",
+		Body: []Pos{{X: 48, Y: 46}, {X: 48, Y: 47}, {X: 48, Y: 48}, },
+	},
+	{
+		Kind: "snake",
+		Name:  "p4",
+		Color: "white",
+		State: "alive",
+		Body: []Pos{{X: 1, Y: 46}, {X: 1, Y: 47}, {X: 1, Y: 48}, },
+	},
 
-// Pareil pour le 2ème joueur
-var Player2 = Snake{
-	Kind: "snake",
-	Name:  "p2",
-	Color: "black",
-	State: "alive",
-	Body: []Pos{
-		Pos{X: 48, Y: 3},
-		Pos{X: 48, Y: 2},
-		Pos{X: 48, Y: 1},
-	},
-}
+};
 
 /**********************/
 /* Fonctions          */
@@ -430,9 +490,9 @@ func main() {
 
 func HandleClient(ws *websocket.Conn) {
 
-	// Dés qu'un client se connecte, on lui envoi l'état de la map
+	// Dés qu'un client se connecte, on lui envoie l'état de la map
 	ws.Write(getInitMessage())
-	ws.Write(getUpdateMessage())
+	//ws.Write(getUpdateMessage())
 
 	for {
 		/*
@@ -460,7 +520,7 @@ func HandleClient(ws *websocket.Conn) {
 		}
 
 		kind := k.Kind
-		fmt.Println("Kind=", kind)
+		fmt.Println("Kind =", kind)
 
 		/*
 		** 3- On envoie vers la bonne fonction d'interprétation
@@ -469,16 +529,111 @@ func HandleClient(ws *websocket.Conn) {
 		// On verrouille avant que la fonction fasse une modification
 		GeneralMutex.Lock()
 
-		if kind == "move" {
-			// Fonction "move"
+		if kind == "move" {//todo add security here.
+			fmt.Println("move!");
+			parseMove(content, ws)
 		} else if kind == "connect" {
-			// Fonction "connect"
-		} else {
+			parseConnect(content, ws)
+		} else if kind == "start" {
+			sendAllUpdateMessage()
+		}else {
 			fmt.Println("Kind inconnue !")
 		}
 
+		//sendWholeWorld
 		// On déverouille quand c'est fini
 		GeneralMutex.Unlock()
+	}
+}
+
+//moveFunc
+func parseMove(jsonMessage string, websocket *websocket.Conn){
+	var move Move
+
+	err := json.Unmarshal([]byte(jsonMessage), &move) // JSON Texte -> Obj
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	key := move.Key
+	fmt.Println("Key=", key)
+
+	for _, wsSnakeLink := range WsSlice{
+		if websocket == wsSnakeLink.Websocket{
+			ArraySnake[wsSnakeLink.index].Move(key)
+			break
+		}
+	}
+
+	sendAllUpdateMessage()
+}
+
+//connectfunc
+func parseConnect(content string, ws *websocket.Conn){
+	var snake Snake
+
+	err := json.Unmarshal([]byte(content), &snake) // JSON Texte -> Obj
+	if err != nil {
+		fmt.Println(err)
+		//todo deconnect client (function disconnectClient(ws))
+		return
+	}
+	snake.WS = ws
+
+	fmt.Println(snake)
+
+	for index, slot := range StateGame.PlayersSlot{
+		if slot == snake.Slot{
+			StateGame.PlayersSlot = append(StateGame.PlayersSlot[:index], StateGame.PlayersSlot[index+1:]...)
+			overwriteSnake(snake)
+			break
+		}
+	}
+
+	WsSlice = append(WsSlice, WebsocketSnakeLink{ws, snake.Slot - 1})
+}
+
+//OTHER FUNCTIONS
+
+func overwriteSnake(overwritingSnake Snake){
+	index := overwritingSnake.Slot -1
+	ArraySnake[index].Name = overwritingSnake.Name
+	ArraySnake[index].Color = overwritingSnake.Color
+	ArraySnake[index].WS = overwritingSnake.WS
+}
+
+func coordInSlice(a Pos, list []Pos) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func getRandomCoordInCanvas() (ret Pos){
+	x := rand.Intn(StateGame.MapSize)
+	y := rand.Intn(StateGame.MapSize)
+
+	ret = Pos{x, y}
+	return ret
+}
+
+func createApple (forbiddenCoordinate []Pos){//should probably be method of grid???
+	for {
+		possibleCoord := getRandomCoordInCanvas()
+		forbiddenCoordinate = append(forbiddenCoordinate, ArrayApples...)
+		if (!coordInSlice(possibleCoord, forbiddenCoordinate)){
+			ArrayApples = append(ArrayApples, possibleCoord)
+			break
+		}
+	}
+};
+
+func sendAllUpdateMessage() {
+	for _, ws := range WsSlice{
+		websocket.Message.Send(ws.Websocket, string(getUpdateMessage()))
 	}
 }
 
@@ -487,8 +642,9 @@ func getUpdateMessage() []byte {
 	var m Update
 
 	m.Kind = "update"
-	m.Snakes = []Snake{Player1, Player2}
-	m.Apples = arrayApples
+	m.Snakes = ArraySnake
+	m.Apples = ArrayApples
+	m.MapSize = StateGame.MapSize
 
 	message, err := json.Marshal(m) // Transformation de l'objet "Update" en JSON
 	if err != nil {
