@@ -215,9 +215,15 @@ function makeInit(free_slot, state_game, map_size) {
     }else{
         toDisable = document.querySelectorAll('.waiting');
         disable(toDisable);
+
+        canvas.htmlElement.className = '';
     }
 
-    //todo set map_size!
+    canvas.htmlElement.width = map_size * cellWidth;
+    canvas.htmlElement.height = map_size * cellWidth;
+
+    canvas.width = map_size;
+    canvas.height = map_size;
 }
 
 function linkSocketListener(socket){
