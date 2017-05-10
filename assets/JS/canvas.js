@@ -195,6 +195,31 @@ function makeUpdate(messageSnakeArray, AppleArray){
     canvas.drawAnew();
 }
 
+function disable(arrayItems) {
+    for (var i in arrayItems){
+        if (arrayItems[i].style !== undefined){
+            arrayItems[i].disabled = true;
+        }
+    }
+}
+
+function makeInit(free_slot, state_game, map_size) {
+    var toDisable = [];
+    if (state_game === 'waiting'){
+        toDisable = document.querySelectorAll('#join>button');
+        for (var i in toDisable){
+            if (toDisable[i].name !== '0' && free_slot.indexOf(parseInt(toDisable[i].name)) === -1){
+                toDisable[i].disabled = true;
+            }
+        }
+    }else{
+        toDisable = document.querySelectorAll('.waiting');
+        disable(toDisable);
+    }
+
+    //todo set map_size!
+}
+
 function linkSocketListener(socket){
     /*socket.onopen = function() {
         console.log("Socket opened");
@@ -206,7 +231,7 @@ function linkSocketListener(socket){
         console.log(message);
         switch (message.kind){
             case 'init':
-                alert('init sent!');
+                makeInit(message.players_slot, message.state_game, message.map_size);
                 break;
             case 'update':
                 makeUpdate(message.snakes, message.apples);

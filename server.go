@@ -536,6 +536,7 @@ func HandleClient(ws *websocket.Conn) {
 		} else if kind == "connect" {
 			parseConnect(content, ws)
 		} else if kind == "start" {
+			StateGame.StateGame = "playing"
 			sendAllInitMessage()
 			sendAllConnectedUpdateMessage()
 		}else {
