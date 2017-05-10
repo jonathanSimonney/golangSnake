@@ -41,16 +41,18 @@ function Coordinate(x, y){
     this.y = y;
 }
 
-function Snake(FirstName, Coordinates, Color, isYours){
+function Snake(FirstName, Coordinates, Color, isYours, state){
     this.firstName = FirstName;
     this.coordinates = Coordinates;
     this.color = Color;
+    this.state = state;
     var myObject = this;
 
-    this.changeValue = function (FirstName, Coordinates, Color) {
+    this.changeValue = function (FirstName, Coordinates, Color, State) {
         myObject.firstName = FirstName;
         myObject.coordinates = Coordinates;
         myObject.color = Color;
+        myObject.state = State
     };
 
     this.drawSnake = function(canvas){
@@ -152,7 +154,9 @@ function Canvas(htmlElement, cellWidth, color){
         for (i in arraySnake){
             if (arraySnake.hasOwnProperty(i)){
                 console.log(arraySnake, i, myObject);
-                arraySnake[i].drawSnake(myObject);
+                if (arraySnake[i].state === 'alive'){
+                    arraySnake[i].drawSnake(myObject);
+                }
             }
         }
     };
@@ -180,14 +184,14 @@ function makeUpdate(messageSnakeArray, AppleArray){
     for (var i in messageSnakeArray) {
         if (messageSnakeArray.hasOwnProperty(i)) {
             if (i in arraySnake) {
-                arraySnake[i].changeValue(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color);
+                arraySnake[i].changeValue(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color, messageSnakeArray[i].state);
             } else {
                 var isYours = false;
                 if (i === pageIndex) {
                     isYours = true;
                 }
 
-                arraySnake.push(new Snake(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color, isYours));
+                arraySnake.push(new Snake(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color, isYours, messageSnakeArray[i].state));
             }
         }
     }

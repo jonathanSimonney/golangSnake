@@ -336,7 +336,7 @@ type Snake struct {
 	Color string `json:"color"`
 	Slot  int    `json:"slot"`  //Not mandatory!!!
 
-	State string `json:"state"` // "alive" ou "dead"
+	State string `json:"state"` // "alive" ou "dead" ou "unplayed"
 
 				    // Tableau de positions
 				    // La tête est le premier élement du tableau
@@ -446,28 +446,28 @@ var ArraySnake = []Snake{
 	{Kind:  "snake",
 		Name:  "p1",
 		Color: "black",
-		State: "alive",
+		State: "unplayed",
 		Body: []Pos{{X: 1, Y: 3}, {X: 1, Y: 2}, {X: 1, Y: 1}, },
 	},
 	{
 		Kind: "snake",
 		Name:  "p2",
 		Color: "yellow",
-		State: "alive",
+		State: "unplayed",
 		Body: []Pos{{X: 48, Y: 3}, {X: 48, Y: 2}, {X: 48, Y: 1}, },
 	},
 	{
 		Kind: "snake",
 		Name:  "p3",
 		Color: "purple",
-		State: "alive",
+		State: "unplayed",
 		Body: []Pos{{X: 48, Y: 46}, {X: 48, Y: 47}, {X: 48, Y: 48}, },
 	},
 	{
 		Kind: "snake",
 		Name:  "p4",
 		Color: "white",
-		State: "alive",
+		State: "unplayed",
 		Body: []Pos{{X: 1, Y: 46}, {X: 1, Y: 47}, {X: 1, Y: 48}, },
 	},
 
@@ -610,6 +610,7 @@ func overwriteSnake(overwritingSnake Snake){
 	ArraySnake[index].Name = overwritingSnake.Name
 	ArraySnake[index].Color = overwritingSnake.Color
 	ArraySnake[index].WS = overwritingSnake.WS
+	ArraySnake[index].State = "alive"
 }
 
 func coordInSlice(a Pos, list []Pos) bool {
