@@ -539,6 +539,7 @@ func HandleClient(ws *websocket.Conn) {
 			StateGame.StateGame = "playing"
 			sendAllInitMessage()
 			sendAllConnectedUpdateMessage()
+			
 		}else {
 			fmt.Println("Kind inconnue !")
 		}
@@ -563,7 +564,7 @@ func parseMove(jsonMessage string, websocket *websocket.Conn){
 	fmt.Println("Key=", key)
 
 	for _, wsSnakeLink := range WsSlice{
-		if websocket == wsSnakeLink.Websocket{
+		if websocket == wsSnakeLink.Websocket && wsSnakeLink.Index != -1{
 			ArraySnake[wsSnakeLink.Index].Move(key)
 			break
 		}
