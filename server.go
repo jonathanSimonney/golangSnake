@@ -621,8 +621,13 @@ func play(){
 		}
 	}
 
-	fmt.Println("game ended!");
+	GeneralMutex.Lock()
+	StateGame.StateGame = "ended"
+	GeneralMutex.Unlock()
+
+	sendAllInitMessage()
 	sendAllConnectedWinMessage(winner)
+	//rebegin?
 }
 
 //moveFunc
