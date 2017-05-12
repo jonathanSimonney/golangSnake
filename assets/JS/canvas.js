@@ -41,7 +41,7 @@ function Coordinate(x, y){
     this.y = y;
 }
 
-function Snake(FirstName, Coordinates, Color, isYours, state){
+function Snake(FirstName, Coordinates, Color, state){
     this.firstName = FirstName;
     this.coordinates = Coordinates;
     this.color = Color;
@@ -67,50 +67,6 @@ function Snake(FirstName, Coordinates, Color, isYours, state){
             canvas.fillCell(Coordinates[i], this.color);
         }
     };
-
-    this.move = function(direction){
-        console.log(direction.key, "new movement");
-        console.log(JSON.stringify({Code : 0, Data : 'z'}));
-        //var newCoordinates;
-        switch (direction.key){
-            case 'z' :
-                //console.log(myObject.Coordinates, myObject);
-                websocket.send(JSON.stringify({kind : 'move', key : 'up'}));
-                //newCoordinates = new Coordinate(myObject.Coordinates[0][0], myObject.Coordinates[0][1]-1);//todo comment
-                break;
-            case 'q':
-                websocket.send(JSON.stringify({kind : 'move', key : 'left'}));
-                //newCoordinates = new Coordinate(myObject.Coordinates[0][0]-1, myObject.Coordinates[0][1]);//todo comment
-                break;
-            case 's':
-                websocket.send(JSON.stringify({kind : 'move', key : 'down'}));
-                //newCoordinates = new Coordinate(myObject.Coordinates[0][0], myObject.Coordinates[0][1]+1);//todo comment
-                break;
-            case 'd':
-                websocket.send(JSON.stringify({kind : 'move', key : 'right'}));
-                //newCoordinates = new Coordinate(myObject.Coordinates[0][0]+1, myObject.Coordinates[0][1]);//todo comment
-                break;
-            default:
-                return 'invalid direction supplied. No move will be made.';
-        }
-
-        /*myObject.Coordinates.unshift(newCoordinates);//todo uncomment and use coords as object
-        if (canvas.appleList.containsArray(newCoordinates)){
-            //canvas.createApple(myObject.Coordinates);
-            console.log(canvas.appleList);
-            canvas.appleList = canvas.appleList.filter(function(item) {
-                return !item.equals(newCoordinates);
-            });
-            console.log(canvas.appleList);
-        }else{
-            myObject.Coordinates.pop();
-        }
-        canvas.drawAnew();*/
-    };
-    if (isYours){
-        console.log('listener added!!!');
-        window.addEventListener('keypress', this.move);
-    }
 }
 
 function Canvas(htmlElement, cellWidth, color){
@@ -186,12 +142,7 @@ function makeUpdate(messageSnakeArray, AppleArray){
             if (i in arraySnake) {
                 arraySnake[i].changeValue(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color, messageSnakeArray[i].state);
             } else {
-                var isYours = false;
-                if (i === pageIndex) {
-                    isYours = true;
-                }
-
-                arraySnake.push(new Snake(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color, isYours, messageSnakeArray[i].state));
+                arraySnake.push(new Snake(messageSnakeArray[i].name, messageSnakeArray[i].body, messageSnakeArray[i].color, messageSnakeArray[i].state));
             }
         }
     }

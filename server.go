@@ -531,15 +531,15 @@ func HandleClient(ws *websocket.Conn) {
 		GeneralMutex.Lock()
 
 		if kind == "move" {//todo add security here.
-			fmt.Println("move!");
-			parseMove(content, ws)
+			if StateGame.StateGame == "playing"{
+				parseMove(content, ws)
+			}
 		} else if kind == "connect" {
 			parseConnect(content, ws)
 		} else if kind == "start" {
 			StateGame.StateGame = "playing"
 			sendAllInitMessage()
 			sendAllConnectedUpdateMessage()
-			
 		}else {
 			fmt.Println("Kind inconnue !")
 		}

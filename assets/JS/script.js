@@ -1,10 +1,12 @@
 var canvas;//todo change so everything is dynamic!!! , changer code par kind.
 var websocket;
 var arraySnake = [];
-var pageIndex;
 var cellWidth = 10;
+var startButton;
 
 window.onload = function () {
+    startButton = document.getElementById('start')
+    startButton.disabled = true;
     var htmlElementCanvas = document.getElementsByTagName('canvas')[0];
     if (htmlElementCanvas.getContext) {
         websocket = new WebSocket('ws://localhost:8081/');
