@@ -430,6 +430,10 @@ func (this *Snake) Move(){
 /* Variables globales */
 /**********************/
 
+
+//pour déterminer les règles du jeu.
+//var EarthIsFlat = true;
+
 //sert à déterminer le temps entre chaque mouvement
 var SleepInterval = 1000 * time.Millisecond
 
@@ -448,7 +452,7 @@ var StateGame = Init{
 }
 
 //tableau de pommes
-var ArrayApples = []Pos{{25, 25}, {35, 40}}
+var ArrayApples = []Pos{}
 
 var ArraySnake = []Snake{
 	{Kind:  "snake",
@@ -492,6 +496,7 @@ var ArraySnake = []Snake{
 /* Main */
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	http.Handle("/", websocket.Handler(HandleClient))
 	fmt.Println("Start on port 8081")
 	err := http.ListenAndServe(":8081", nil)
@@ -565,10 +570,18 @@ func HandleClient(ws *websocket.Conn) {
 
 //game func
 func play(){
+	GeneralMutex.Lock()
+	for i := 1; i <= 2; i++ {
+		createApple([]Pos{})
+	}
+	GeneralMutex.Unlock()
+
 	for {
 		time.Sleep(SleepInterval)
 		for index := range ArraySnake{
+			GeneralMutex.Lock()
 			ArraySnake[index].Move()
+			GeneralMutex.Unlock()
 		}
 		sendAllConnectedUpdateMessage()
 	}
