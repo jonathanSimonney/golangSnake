@@ -316,6 +316,7 @@ import (
 	"math/rand"
 
 	"golang.org/x/net/websocket"
+	"time"
 )
 
 /**********************/
@@ -341,6 +342,8 @@ type Snake struct {
 				    // Tableau de positions
 				    // La tête est le premier élement du tableau
 	Body []Pos `json:"body"`
+
+	Direction string `json:"-"` //sert à indiquer la direction actuelle
 
 				    // WebSocket du client qui le controle
 				    // `json:"-"` ça veut dire qu'on l'envoie/reçoit pas par le JSON
@@ -383,25 +386,27 @@ type WebsocketSnakeLink struct{
 /* Méthodes */
 /**********************/
 
-func (this *Snake) Move(key string){
+func (this *Snake) Move(){
 	//console.log(direction, myObject);
 	var newCoordinates = Pos{}
+	key := this.Direction
+
 	switch (key){
-	case "up" :
-		//console.log(myObject.Coordinates, myObject);
-		newCoordinates = Pos{this.Body[0].X, this.Body[0].Y - 1}
-		break
-	case "left":
-		newCoordinates = Pos{this.Body[0].X-1, this.Body[0].Y}
-		break
-	case "down":
-		newCoordinates = Pos{this.Body[0].X, this.Body[0].Y+1}
-		break
-	case "right":
-		newCoordinates = Pos{this.Body[0].X+1,this.Body[0].Y}
-		break
-	default:
-		fmt.Println("invalid direction supplied.No move will be made.")
+		case "up" :
+			//console.log(myObject.Coordinates, myObject);
+			newCoordinates = Pos{this.Body[0].X, this.Body[0].Y - 1}
+			break
+		case "left":
+			newCoordinates = Pos{this.Body[0].X-1, this.Body[0].Y}
+			break
+		case "down":
+			newCoordinates = Pos{this.Body[0].X, this.Body[0].Y+1}
+			break
+		case "right":
+			newCoordinates = Pos{this.Body[0].X+1,this.Body[0].Y}
+			break
+		default:
+			fmt.Println("invalid direction supplied.No move will be made.", key)
 	}
 
 	this.Body = append([]Pos{newCoordinates}, this.Body...)
@@ -424,6 +429,9 @@ func (this *Snake) Move(key string){
 /**********************/
 /* Variables globales */
 /**********************/
+
+//sert à déterminer le temps entre chaque mouvement
+var SleepInterval = 1000 * time.Millisecond
 
 //sert à avoir toutes les ws
 var WsSlice = []WebsocketSnakeLink{}
@@ -448,6 +456,7 @@ var ArraySnake = []Snake{
 		Color: "black",
 		State: "unplayed",
 		Body: []Pos{{X: 1, Y: 3}, {X: 1, Y: 2}, {X: 1, Y: 1}, },
+		Direction: "down",
 	},
 	{
 		Kind: "snake",
@@ -455,6 +464,7 @@ var ArraySnake = []Snake{
 		Color: "yellow",
 		State: "unplayed",
 		Body: []Pos{{X: 48, Y: 3}, {X: 48, Y: 2}, {X: 48, Y: 1}, },
+		Direction: "down",
 	},
 	{
 		Kind: "snake",
@@ -462,6 +472,7 @@ var ArraySnake = []Snake{
 		Color: "purple",
 		State: "unplayed",
 		Body: []Pos{{X: 48, Y: 46}, {X: 48, Y: 47}, {X: 48, Y: 48}, },
+		Direction: "up",
 	},
 	{
 		Kind: "snake",
@@ -469,6 +480,7 @@ var ArraySnake = []Snake{
 		Color: "white",
 		State: "unplayed",
 		Body: []Pos{{X: 1, Y: 46}, {X: 1, Y: 47}, {X: 1, Y: 48}, },
+		Direction: "up",
 	},
 
 };
@@ -540,6 +552,7 @@ func HandleClient(ws *websocket.Conn) {
 			StateGame.StateGame = "playing"
 			sendAllInitMessage()
 			sendAllConnectedUpdateMessage()
+			go play()
 		}else {
 			fmt.Println("Kind inconnue !")
 		}
@@ -547,6 +560,17 @@ func HandleClient(ws *websocket.Conn) {
 		//sendWholeWorld
 		// On déverouille quand c'est fini
 		GeneralMutex.Unlock()
+	}
+}
+
+//game func
+func play(){
+	for {
+		time.Sleep(SleepInterval)
+		for index := range ArraySnake{
+			ArraySnake[index].Move()
+		}
+		sendAllConnectedUpdateMessage()
 	}
 }
 
@@ -565,12 +589,10 @@ func parseMove(jsonMessage string, websocket *websocket.Conn){
 
 	for _, wsSnakeLink := range WsSlice{
 		if websocket == wsSnakeLink.Websocket && wsSnakeLink.Index != -1{
-			ArraySnake[wsSnakeLink.Index].Move(key)
+			ArraySnake[wsSnakeLink.Index].Direction = key
 			break
 		}
 	}
-
-	sendAllConnectedUpdateMessage()
 }
 
 //connectfunc
