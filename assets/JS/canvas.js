@@ -198,7 +198,7 @@ function linkSocketListener(socket){
                 makeUpdate(message.snakes, message.apples);
                 break;
             case 'won':
-                //win function
+                alert('winner is : '+message.player);
                 break;
             default :
                 alert('invalid kind!');

@@ -350,6 +350,11 @@ type Snake struct {
 	WS *websocket.Conn `json:"-"`
 }
 
+type Win struct{
+	Kind string `json:"kind"`
+	Player string `json:"player"`
+}
+
 type Update struct {
 	Kind string `json:"kind"`
 
@@ -409,6 +414,12 @@ func (this *Snake) Move(){
 			fmt.Println("invalid direction supplied.No move will be made.", key)
 	}
 
+	if (!coordIsGood(newCoordinates)){
+		this.State = "dead"
+		fmt.Println("a snake died!", this)
+		return;
+	}
+
 	this.Body = append([]Pos{newCoordinates}, this.Body...)
 	if (coordInSlice(newCoordinates, ArrayApples)){
 		createApple(this.Body)
@@ -432,7 +443,7 @@ func (this *Snake) Move(){
 
 
 //pour déterminer les règles du jeu.
-//var EarthIsFlat = true;
+var EarthIsFlat = true;//todo make sure if this is false, snake reappear on other side of the map!
 
 //sert à déterminer le temps entre chaque mouvement
 var SleepInterval = 1000 * time.Millisecond
@@ -569,22 +580,49 @@ func HandleClient(ws *websocket.Conn) {
 }
 
 //game func
+func coordIsGood(coordinate Pos) bool{
+	for _, snake := range ArraySnake{
+		if (coordInSlice(coordinate, snake.Body)){
+			return false
+		}
+	}
+
+	if coordinate.X >= 50 || coordinate.X < 0 || coordinate.Y >= 50 || coordinate.Y < 0{
+		return !EarthIsFlat
+	}
+	return true
+}
+
 func play(){
 	GeneralMutex.Lock()
 	for i := 1; i <= 2; i++ {
 		createApple([]Pos{})
 	}
 	GeneralMutex.Unlock()
+	snakeAlive := 10
+	var winner string
 
-	for {
+	for snakeAlive > 1{
 		time.Sleep(SleepInterval)
+		fmt.Println("snake alive : ", snakeAlive)
+		snakeAlive = 0
 		for index := range ArraySnake{
 			GeneralMutex.Lock()
 			ArraySnake[index].Move()
 			GeneralMutex.Unlock()
 		}
 		sendAllConnectedUpdateMessage()
+
+		for _, snake := range ArraySnake{
+			if snake.State == "alive"{
+				winner = snake.Name
+				snakeAlive += 1
+			}
+		}
 	}
+
+	fmt.Println("game ended!");
+	sendAllConnectedWinMessage(winner)
 }
 
 //moveFunc
@@ -677,6 +715,17 @@ func createApple (forbiddenCoordinate []Pos){//should probably be method of grid
 	}
 };
 
+//sending func
+
+func sendAllConnectedWinMessage(winner string) {
+	for _, ws := range WsSlice{
+		if ws.Index != -10 {
+			fmt.Println(string(getWinMessage(winner)))
+			websocket.Message.Send(ws.Websocket, string(getWinMessage(winner)))
+		}
+	}
+}
+
 func sendAllConnectedUpdateMessage() {
 	for _, ws := range WsSlice{
 		if ws.Index != -10 {
@@ -689,6 +738,18 @@ func sendAllInitMessage() {
 	for _, ws := range WsSlice{
 		websocket.Message.Send(ws.Websocket, string(getInitMessage()))
 	}
+}
+
+func getWinMessage(winner string ) []byte{
+	var m Win
+	m.Kind = "won"
+	m.Player = winner
+
+	message, err := json.Marshal(m) // Transformation de l'objet "Win" en JSON
+	if err != nil {
+		fmt.Println("Something wrong with JSON Marshal map")
+	}
+	return message
 }
 
 // "update" dans le protocole
