@@ -1,7 +1,7 @@
 function linkJoinEvent(){
     for (var i in document.querySelectorAll("#join>button")) {
         document.querySelectorAll("#join>button")[i].onclick = function (e) {
-            websocket.send(JSON.stringify({kind : 'connect', slot : parseInt(this.name), name: 'change', color: 'black'}));
+            websocket.send(JSON.stringify({kind : 'connect', slot : parseInt(this.name), name: 'change', color: 'red'}));
             disable(document.querySelectorAll("#join>button"));
             window.addEventListener('keypress', move);
             startButton.disabled = parseInt(e.target.name) === 0;

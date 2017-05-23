@@ -10,10 +10,10 @@ window.onload = function () {
     var htmlElementCanvas = document.getElementsByTagName('canvas')[0];
     if (htmlElementCanvas.getContext) {
         console.log('test!');
-        websocket = new WebSocket('ws://10.38.162.210:8081');//websocket = new WebSocket('ws://192.168.16.78:8081');
+        websocket = new WebSocket('ws://localhost:8081');//websocket = new WebSocket('ws://192.168.16.78:8081');
         linkSocketListener(websocket);
 
-        canvas = new Canvas(htmlElementCanvas, cellWidth, ['#ff0000', '#0000ff']);
+        canvas = new Canvas(htmlElementCanvas, cellWidth, ['#ffffff', '#000000']);
 
         canvas.drawAnew();
     }
