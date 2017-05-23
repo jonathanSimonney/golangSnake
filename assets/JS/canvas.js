@@ -109,7 +109,7 @@ function Canvas(htmlElement, cellWidth, color){
 
         for (i in arraySnake){
             if (arraySnake.hasOwnProperty(i)){
-                console.log(arraySnake, i, myObject);
+                //console.log(arraySnake, i, myObject);
                 if (arraySnake[i].state === 'alive'){
                     arraySnake[i].drawSnake(myObject);
                 }
@@ -137,6 +137,7 @@ function toggleFillStyle(canvasObject){
 }
 
 function makeUpdate(messageSnakeArray, AppleArray){
+    console.log('update done!');
     for (var i in messageSnakeArray) {
         if (messageSnakeArray.hasOwnProperty(i)) {
             if (i in arraySnake) {

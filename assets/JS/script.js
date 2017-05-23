@@ -5,11 +5,12 @@ var cellWidth = 10;
 var startButton;
 
 window.onload = function () {
-    startButton = document.getElementById('start')
+    startButton = document.getElementById('start');
     startButton.disabled = true;
     var htmlElementCanvas = document.getElementsByTagName('canvas')[0];
     if (htmlElementCanvas.getContext) {
-        websocket = new WebSocket('ws://localhost:8081/');
+        console.log('test!');
+        websocket = new WebSocket('ws://10.38.162.210:8081');//websocket = new WebSocket('ws://192.168.16.78:8081');
         linkSocketListener(websocket);
 
         canvas = new Canvas(htmlElementCanvas, cellWidth, ['#ff0000', '#0000ff']);

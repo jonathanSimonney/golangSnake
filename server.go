@@ -446,7 +446,7 @@ func (this *Snake) Move(){
 var EarthIsFlat = true;//todo make sure if this is false, snake reappear on other side of the map!
 
 //sert à déterminer le temps entre chaque mouvement
-var SleepInterval = 1000 * time.Millisecond
+var SleepInterval = 10000 * time.Millisecond
 
 //sert à avoir toutes les ws
 var WsSlice = []WebsocketSnakeLink{}
@@ -658,6 +658,7 @@ func parseConnect(content string, currentWebsocket *websocket.Conn){
 	err := json.Unmarshal([]byte(content), &snake) // JSON Texte -> Obj
 	if err != nil {
 		fmt.Println(err)
+		//disconnectClient(currentWebsocket)
 		//todo deconnect client (function disconnectClient(ws))
 		return
 	}
