@@ -446,7 +446,7 @@ func (this *Snake) Move(){
 var EarthIsFlat = true;//todo make sure if this is false, snake reappear on other side of the map!
 
 //sert à déterminer le temps entre chaque mouvement
-var SleepInterval = 10000 * time.Millisecond
+var SleepInterval = 100 * time.Millisecond
 
 //sert à avoir toutes les ws
 var WsSlice = []WebsocketSnakeLink{}
@@ -582,7 +582,7 @@ func HandleClient(ws *websocket.Conn) {
 //game func
 func coordIsGood(coordinate Pos) bool{
 	for _, snake := range ArraySnake{
-		if (coordInSlice(coordinate, snake.Body)){
+		if (coordInSlice(coordinate, snake.Body) && snake.State == "alive"){
 			return false
 		}
 	}
