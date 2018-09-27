@@ -506,6 +506,63 @@ var ArraySnake = []Snake{
 
 /* Main */
 
+func reinitServer(){
+	//pour déterminer les règles du jeu.
+	EarthIsFlat = true;//todo make sure if this is false, snake reappear on other side of the map!
+
+	//sert à déterminer le temps entre chaque mouvement
+	SleepInterval = 100 * time.Millisecond
+
+	//sert à avoir toutes les ws
+	WsSlice = []WebsocketSnakeLink{}
+
+	// Etat du jeu
+	StateGame = Init{
+		Kind:        "init",
+		StateGame:   "waiting",
+		MapSize:     50,
+		PlayersSlot: []int{1, 2, 3, 4},
+	}
+
+	//tableau de pommes
+	ArrayApples = []Pos{}
+
+	ArraySnake = []Snake{
+		{Kind:  "snake",
+			Name:  "p1",
+			Color: "black",
+			State: "unplayed",
+			Body: []Pos{{X: 1, Y: 3}, {X: 1, Y: 2}, {X: 1, Y: 1}, },
+			Direction: "down",
+		},
+		{
+			Kind: "snake",
+			Name:  "p2",
+			Color: "yellow",
+			State: "unplayed",
+			Body: []Pos{{X: 48, Y: 3}, {X: 48, Y: 2}, {X: 48, Y: 1}, },
+			Direction: "down",
+		},
+		{
+			Kind: "snake",
+			Name:  "p3",
+			Color: "purple",
+			State: "unplayed",
+			Body: []Pos{{X: 48, Y: 46}, {X: 48, Y: 47}, {X: 48, Y: 48}, },
+			Direction: "up",
+		},
+		{
+			Kind: "snake",
+			Name:  "p4",
+			Color: "white",
+			State: "unplayed",
+			Body: []Pos{{X: 1, Y: 46}, {X: 1, Y: 47}, {X: 1, Y: 48}, },
+			Direction: "up",
+		},
+
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	http.Handle("/", websocket.Handler(HandleClient))
@@ -628,6 +685,7 @@ func play(){
 	sendAllInitMessage()
 	sendAllConnectedWinMessage(winner)
 	//rebegin?
+	reinitServer()
 }
 
 //moveFunc
