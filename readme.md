@@ -9,3 +9,6 @@ With go installed, you will need to
 go get golang.org/x/net/websocket
 go install golang.org/x/net/websocket
 ```
+
+Since this is my demo app for heroku, if you too want to deploy it to heroku, don't forget to scale your app with one dyno (with :
+```heroku ps:scale web=1```

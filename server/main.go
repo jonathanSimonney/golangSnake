@@ -311,9 +311,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"sync"
 	"math/rand"
+	"net/http"
+	"os"
+	"sync"
 
 	"golang.org/x/net/websocket"
 	"time"
@@ -567,7 +568,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	http.Handle("/", websocket.Handler(HandleClient))
 	fmt.Println("Start on port 8081")
-	err := http.ListenAndServe(":8081", nil)
+	err := http.ListenAndServe(":" + os.Getenv("PORT"), nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
